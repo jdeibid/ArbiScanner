@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArbiScanner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>ArbiScanner</h1>
+            <h3>Edición Facebank</h3>
+            <p>Calcula el spread y comisiones</p>
+        </header>
+
+        <main>
+            <section class="card rates">
+                <h2>Tasas Actuales <small id="last-updated"
+                        style="font-size:0.55em;font-weight:400;opacity:0.6;margin-left:0.5em;"></small></h2>
+                <div class="rate-grid">
+                    <div class="rate-item">
+                        <span class="label">Dólar Oficial</span>
+                        <span class="value" id="bcv-rate">Loading...</span>
+                    </div>
+                    <div class="rate-item">
+                        <span class="label">Dólar Binance</span>
+                        <span class="value" id="binance-ves-rate">Loading...</span>
+                    </div>
+                    <div class="rate-item">
+                        <span class="label">WallyTech a USDT</span>
+                        <span class="value" id="binance-wallytech-rate">Loading...</span>
+                    </div>
+                    <div class="rate-item">
+                        <span class="label">Zinli a USDT</span>
+                        <span class="value" id="binance-zinli-rate">Loading...</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card calculator">
+                <h2>Opciones de Cálculo</h2>
+                <div class="input-group">
+                    <label for="amount">Cantidad a Cambiar (Fiat)</label>
+                    <input type="number" id="amount" value="100" min="0" step="1">
+                </div>
+                <!-- Platform selection (Wally by default)-->
+                <div class="input-group">
+                    <label for="platform">Plataforma</label>
+                    <select id="platform">
+                        <option value="wally">WallyTech (2.99%)</option>
+                        <option value="zinli">Zinli (3.75%)</option>
+                    </select>
+                </div>
+
+                <button id="calculate-btn">Calcular</button>
+            </section>
+
+            <section class="card results">
+                <h2>Resultados</h2>
+                <div class="result-grid">
+                    <div class="result-item">
+                        <span class="label">Comisión de la Plataforma</span>
+                        <span class="value" id="result-platform-comm">$0.00</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Impuesto ITBMS (7% sobre la Comisión de la Plataforma)</span>
+                        <span class="value" id="result-tax">$0.00</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Comisión TDD Facebank (2.8%)</span>
+                        <span class="value" id="result-card-comm">$0.00</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Total reflejado en Tarjeta</span>
+                        <span class="value" id="result-total-value">$0.00</span>
+                    </div>
+                    <!--<div class="result-item">
+                        <span class="label">Tasa de Cambio en Binance</span>
+                        <span class="value" id="binance-margin">$0.00</span>
+                    </div>-->
+                    <div class="result-item">
+                        <span class="label">Cantidad Neta en Binance</span>
+                        <span class="value" id="result-amount-binance">$0.00</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="label">Rendimiento Real por Dólar</span>
+                        <span class="value" id="result-real-amount">0.00</span>
+                    </div>
+                    <div class="result-item highlight">
+                        <span class="label">Margen de Ganancia Por USD</span>
+                        <span class="value" id="result-spread">0.00</span>
+                    </div>
+                    <div class="result-item highlight">
+                        <span class="label">Total Neto en Bolívares</span>
+                        <span class="value" id="result-profit">0.00</span>
+                    </div>
+                    <div class="result-item highlight">
+                        <span class="label">Equivalente en Dólares BCV</span>
+                        <span class="value" id="bcv-equivalent">$0.00</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card rates-comparison">
+                <h2>Comparación de Tasas</h2>
+                <div class="rate-grid">
+                    <div class="rate-item">
+                        <span class="label">Pago en Bolívares BCV</span>
+                        <span class="value" id="bcv-total">Bs. 0.00</span>
+                    </div>
+                    <div class="rate-item">
+                        <span class="label">Equivalente en Dólares Binance Netos</span>
+                        <span class="value" id="binance-ves-total">$0.00</span>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+
+
+    <script src="app.js"></script>
+</body>
+
+</html>
