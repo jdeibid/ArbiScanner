@@ -12,7 +12,7 @@ const PLATFORMS = {
         label: 'Zinli',
         commission: 0.0375,   // 3.75%
         taxRate: 0.07,        // 7 % of commission (ITBMS)
-        taxApplicable: true,  // Zinli DOES charge the tax
+        taxApplicable: true,  // Zinli and WallyTech charge the tax
         binanceRateKey: 'binanceZinli',
     },
 };
@@ -23,6 +23,7 @@ const CARD_COMM_RATE = 0.028; // 2.8%
 // ─── Live rates (populated by fetchRates) ─────────────────────────────────────
 let rates = {
     bcv: 0,
+    euro: 0,
     binanceVes: 0,
     binanceWally: 0,
     binanceZinli: 0,
@@ -52,6 +53,7 @@ async function fetchRates() {
         const data = await res.json();
 
         rates.bcv = data.bcv;
+        rates.euro = data.euro;
         rates.binanceVes = data.binanceVes;
         rates.binanceWally = data.binanceWally;
         rates.binanceZinli = data.binanceZinli;
@@ -114,9 +116,12 @@ function calculate() {
     const bcvEquivalent = rates.bcv > 0 ? totalProfit / rates.bcv : 0;
 
     // Comparison: paying at BCV rate
-    const bcvTotal = amount * rates.bcv;
-    const binanceVesTotal = totalProfit > 0 ? bcvTotal / (totalProfit / amount) : 0;
-    const binanceVesNet = (bcvTotal / rates.binanceVes) + 0.05;
+    const bcvUSDTotal = amount * rates.bcv;
+    const bcvEURTotal = amount * rates.euro;
+    const binanceVesTotal = totalProfit > 0 ? bcvUSDTotal / (totalProfit / amount) : 0;
+    const binanceVesNet = (bcvUSDTotal / rates.binanceVes) + 0.05;
+    const binanceEurNet = (bcvEURTotal / rates.binanceVes) + 0.05;
+    console.log(rates.euro, binanceEurNet);
 
     // 3. Write results to DOM (missing elements are silently skipped)
     setText('result-platform-comm', `$${fmt(platformComm, 2)}`);
@@ -128,10 +133,15 @@ function calculate() {
     setText('result-spread', `Bs. ${fmt(spread, 2)}`);
     setText('result-profit', `Bs. ${fmt(totalProfit, 2)}`);
     setText('bcv-equivalent', `$${fmt(bcvEquivalent, 2)}`);
-    setText('bcv-total', `Bs. ${fmt(bcvTotal, 2)}`);
+    setText('bcv-total', `Bs. ${fmt(bcvUSDTotal, 2)}`);
     setText('binance-ves-total', `$${fmt(binanceVesTotal, 2)}`);
-    console.log(binanceVesNet);
+    setText('binance-usd-net', `$${fmt(binanceVesNet, 2)}`);
+    setText('euro-total', `Bs. ${fmt(bcvEURTotal, 2)}`);
+    setText('binance-eur-net', `$${fmt(binanceEurNet, 2)}`);
+
+    // Promode
     setText('binance-ves-net', `$${fmt(binanceVesNet, 2)}`);
+
 }
 
 // ─── Formatting helper ─────────────────────────────────────────────────────────
