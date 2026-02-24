@@ -9,6 +9,16 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// Serve index.html for the root path
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Serve promode.html for /promode
+app.get('/promode', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'promode.html'));
+});
+
 // Helper: fetch a single Binance P2P price
 async function fetchBinanceP2P(asset) {
     const payload = {

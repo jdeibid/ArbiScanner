@@ -1,28 +1,49 @@
-document.addEventListener('DOMContentLoaded', () => {
-    fetchRates();
+// ─── Platform configuration ───────────────────────────────────────────────────
+// Add new platforms here; the rest of the code adapts automatically.
+const PLATFORMS = {
+    wally: {
+        label: 'WallyTech',
+        commission: 0.0299,   // 2.99%
+        taxRate: 0.07,        // 7 % of commission (ITBMS)
+        taxApplicable: false, // WallyTech does NOT charge the tax
+        binanceRateKey: 'binanceWally',
+    },
+    zinli: {
+        label: 'Zinli',
+        commission: 0.0375,   // 3.75%
+        taxRate: 0.07,        // 7 % of commission (ITBMS)
+        taxApplicable: true,  // Zinli DOES charge the tax
+        binanceRateKey: 'binanceZinli',
+    },
+};
 
-    document.getElementById('calculate-btn').addEventListener('click', calculate);
-    document.getElementById('platform').addEventListener('change', updateBinanceMargin);
-});
+// Card commission — not platform-specific
+const CARD_COMM_RATE = 0.028; // 2.8%
 
-function updateBinanceMargin() {
-    const platform = document.getElementById('platform').value;
-    const marginInput = document.getElementById('binance-margin');
-    if (marginInput) {
-        if (platform === 'zinli') {
-            marginInput.textContent = `$${rates.binanceZinli}`;
-        } else {
-            marginInput.textContent = `$${rates.binanceWally}`;
-        }
-    }
-}
-
+// ─── Live rates (populated by fetchRates) ─────────────────────────────────────
 let rates = {
     bcv: 0,
     binanceVes: 0,
     binanceWally: 0,
-    binanceZinli: 0
+    binanceZinli: 0,
 };
+
+// ─── Bootstrap ────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    fetchRates();
+    document.getElementById('calculate-btn').addEventListener('click', calculate);
+    document.getElementById('platform').addEventListener('change', updateBinanceMarginDisplay);
+});
+
+// ─── Rate display helpers ──────────────────────────────────────────────────────
+function updateBinanceMarginDisplay() {
+    const platformKey = document.getElementById('platform').value;
+    const platform = PLATFORMS[platformKey];
+    const el = document.getElementById('binance-margin');
+    if (el && platform) {
+        el.textContent = `$${rates[platform.binanceRateKey]}`;
+    }
+}
 
 async function fetchRates() {
     try {
@@ -35,77 +56,95 @@ async function fetchRates() {
         rates.binanceWally = data.binanceWally;
         rates.binanceZinli = data.binanceZinli;
 
-        document.getElementById('bcv-rate').textContent = `Bs. ${rates.bcv.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        document.getElementById('binance-ves-rate').textContent = `Bs. ${rates.binanceVes.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        document.getElementById('binance-wallytech-rate').textContent = `$${rates.binanceWally.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
-        document.getElementById('binance-zinli-rate').textContent = `$${rates.binanceZinli.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
+        setText('bcv-rate', `Bs. ${fmt(rates.bcv, 2)}`);
+        setText('binance-ves-rate', `Bs. ${fmt(rates.binanceVes, 2)}`);
+        setText('binance-wallytech-rate', `$${fmt(rates.binanceWally, 4)}`);
+        setText('binance-zinli-rate', `$${fmt(rates.binanceZinli, 4)}`);
 
-        // Show when rates were last fetched (may be from CDN cache)
         if (data.fetchedAt) {
-            const fetchedDate = new Date(data.fetchedAt);
-            const timeStr = fetchedDate.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
+            const timeStr = new Date(data.fetchedAt)
+                .toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
             const el = document.getElementById('last-updated');
             if (el) el.textContent = `Actualizado: ${timeStr}`;
         }
 
-        updateBinanceMargin();
+        updateBinanceMarginDisplay();
     } catch (err) {
         console.error('Error fetching rates', err);
     }
 }
 
+// ─── Core calculation (pure) ───────────────────────────────────────────────────
+/**
+ * Runs all calculations from raw inputs.
+ * Reads the DOM only for user inputs, then updates result elements.
+ */
 function calculate() {
-    updateBinanceMargin();
-    const amount = parseFloat(document.getElementById('amount').value);
-    const platform = document.getElementById('platform').value;
-    const margin = platform === 'zinli' ? rates.binanceZinli : rates.binanceWally;
+    // 1. Read inputs
+    const amount = parseFloat(document.getElementById('amount').value) || 0;
+    const platformKey = document.getElementById('platform').value;
+    const platform = PLATFORMS[platformKey];
 
-    let platformCommRate = platform === 'zinli' ? 0.0375 : 0.0299; // 3.75% or 2.99%
-    let cardCommRate = 0.028; // 2.8%
-    let taxRate = 0.07; // 7% of platform commission
-
-    // Calculate Platform Commission
-    const platformComm = amount * platformCommRate;
-    document.getElementById('result-platform-comm').textContent = `$${platformComm.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-    // Calculate Tax
-    const tax = platformComm * taxRate;
-    document.getElementById('result-tax').textContent = `$${tax.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-    // Calculate Card Commission
-    const cardComm = (amount + platformComm + tax) * cardCommRate;
-    document.getElementById('result-card-comm').textContent = `$${cardComm.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-    // Total Value
-    const totalValue = amount + platformComm + tax + cardComm;
-    document.getElementById('result-total-value').textContent = `$${totalValue.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-    // Total Amount in Binance = Total Value - difference of the pair in Binance
-    const totalAmountBinance = (amount / margin) - 0.05;
-    document.getElementById('result-amount-binance').textContent = `$${totalAmountBinance.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-    // Real Amount
-    let realAmount = 0;
-    if (totalValue > 0) {
-        realAmount = totalAmountBinance / totalValue;
+    if (!platform) {
+        console.warn(`Unknown platform: ${platformKey}`);
+        return;
     }
-    document.getElementById('result-real-amount').textContent = `${(realAmount * 100).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
 
-    // Spread (VES rate in Binance - Official Rate)
+    const margin = rates[platform.binanceRateKey];
+
+    // 2. Pure calculations
+    const platformComm = amount * platform.commission;
+    const tax = platform.taxApplicable ? platformComm * platform.taxRate : 0;
+    const cardComm = (amount + platformComm + tax) * CARD_COMM_RATE;
+    const totalValue = amount + platformComm + tax + cardComm;
+
+    // Net amount received in Binance (deduct Binance's ~$0.05 spread fee)
+    const totalAmountBinance = margin > 0 ? (amount / margin) - 0.05 : 0;
+
+    // Real yield per dollar invested
+    const realAmount = totalValue > 0 ? totalAmountBinance / totalValue : 0;
+
+    // Spread vs official rate
     const spread = (rates.binanceVes * realAmount) - rates.bcv;
-    document.getElementById('result-spread').textContent = `Bs. ${spread.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    console.log(realAmount);
 
-    // Total in VES at Binance
-    const totalProfit = (totalAmountBinance * rates.binanceVes.toFixed(2)) - 0.05;
-    document.getElementById('result-profit').textContent = `Bs. ${totalProfit.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    // Net in VES
+    const totalProfit = (totalAmountBinance * parseFloat(rates.binanceVes.toFixed(2))) - 0.05;
 
-    // Bcv Equivalent
-    const bcvEquivalent = totalProfit / rates.bcv;
-    document.getElementById('bcv-equivalent').textContent = `$${bcvEquivalent.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    // BCV equivalent of the profit
+    const bcvEquivalent = rates.bcv > 0 ? totalProfit / rates.bcv : 0;
 
-    // Update comparison rates
+    // Comparison: paying at BCV rate
     const bcvTotal = amount * rates.bcv;
-    document.getElementById('bcv-total').textContent = `Bs. ${bcvTotal.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    document.getElementById('binance-ves-total').textContent = `$${(bcvTotal / (totalProfit / amount)).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const binanceVesTotal = totalProfit > 0 ? bcvTotal / (totalProfit / amount) : 0;
+    const binanceVesNet = (bcvTotal / rates.binanceVes) + 0.05;
+
+    // 3. Write results to DOM (missing elements are silently skipped)
+    setText('result-platform-comm', `$${fmt(platformComm, 2)}`);
+    setText('result-tax', `$${fmt(tax, 2)}`);
+    setText('result-card-comm', `$${fmt(cardComm, 2)}`);
+    setText('result-total-value', `$${fmt(totalValue, 2)}`);
+    setText('result-amount-binance', `$${fmt(totalAmountBinance, 2)}`);
+    setText('result-real-amount', `${fmt(realAmount * 100, 2)}%`);
+    setText('result-spread', `Bs. ${fmt(spread, 2)}`);
+    setText('result-profit', `Bs. ${fmt(totalProfit, 2)}`);
+    setText('bcv-equivalent', `$${fmt(bcvEquivalent, 2)}`);
+    setText('bcv-total', `Bs. ${fmt(bcvTotal, 2)}`);
+    setText('binance-ves-total', `$${fmt(binanceVesTotal, 2)}`);
+    console.log(binanceVesNet);
+    setText('binance-ves-net', `$${fmt(binanceVesNet, 2)}`);
+}
+
+// ─── Formatting helper ─────────────────────────────────────────────────────────
+function fmt(value, decimals = 2) {
+    return value.toLocaleString('es-VE', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+    });
+}
+
+// ─── Safe DOM write ────────────────────────────────────────────────────────────
+// Silently skips if the element doesn't exist in the current HTML.
+function setText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
 }

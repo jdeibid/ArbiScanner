@@ -159,3 +159,8 @@ button:hover {
     -webkit-appearance: none;
     margin: 0;
 }
+
+/* Make i element non-bold */
+i {
+    font-weight: 400;
+}
