@@ -16,6 +16,10 @@
             "dest": "server.js"
         },
         {
+            "src": "/promode",
+            "dest": "public/promode.html"
+        },
+        {
             "src": "/(.*)",
             "dest": "public/$1"
         }

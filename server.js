@@ -52,8 +52,9 @@ async function fetchBinanceP2P(asset) {
 app.get('/api/rates', async (req, res) => {
     try {
         // Fetch all sources in parallel
-        const [dolarRes, binanceVes, binanceWally, binanceZinli] = await Promise.all([
+        const [dolarRes, eurosRes, binanceVes, binanceWally, binanceZinli] = await Promise.all([
             axios.get('https://ve.dolarapi.com/v1/dolares/oficial'),
+            axios.get('https://ve.dolarapi.com/v1/euros/oficial'),
             fetchBinanceP2P('VES'),
             fetchBinanceP2P('WallyTech'),
             fetchBinanceP2P('Zinli'),
@@ -61,6 +62,7 @@ app.get('/api/rates', async (req, res) => {
 
         const rates = {
             bcv: dolarRes.data.promedio,
+            euro: eurosRes.data.promedio,
             binanceVes,
             binanceWally,
             binanceZinli,
@@ -79,3 +81,4 @@ app.get('/api/rates', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+

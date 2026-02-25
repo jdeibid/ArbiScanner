@@ -164,3 +164,21 @@ button:hover {
 i {
     font-weight: 400;
 }
+
+/* USD/USDT Gap Meter */
+.green-text {
+    color: #22c55e;
+}
+
+.yellow-text {
+    color: #eab308;
+}
+
+.red-text {
+    color: #ef4444;
+}
+
+.extra-red-text {
+    color: #ff0000;
+    font: bolder;
+}
