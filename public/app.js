@@ -46,23 +46,47 @@ function updateBinanceMarginDisplay() {
     }
 }
 
+// ─── Rate fetching ────────────────────────────────────────────────────────────
 async function fetchRates() {
     try {
         const res = await fetch('/api/rates');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
+
+        // ─── Update rates ───────────────────────────────────────────────────────────
         rates.bcv = data.bcv;
         rates.euro = data.euro;
         rates.binanceVes = data.binanceVes;
         rates.binanceWally = data.binanceWally;
         rates.binanceZinli = data.binanceZinli;
 
+        // ─── Update display ───────────────────────────────────────────────────────────
         setText('bcv-rate', `Bs. ${fmt(rates.bcv, 2)}`);
+        setText('euro-rate', `Bs. ${fmt(rates.euro, 2)}`);
         setText('binance-ves-rate', `Bs. ${fmt(rates.binanceVes, 2)}`);
-        setText('binance-wallytech-rate', `$${fmt(rates.binanceWally, 4)}`);
-        setText('binance-zinli-rate', `$${fmt(rates.binanceZinli, 4)}`);
+        setText('binance-wallytech-rate', `$${fmt(rates.binanceWally, 3)}`);
+        setText('binance-zinli-rate', `$${fmt(rates.binanceZinli, 3)}`);
 
+        // ─── Update gap ───────────────────────────────────────────────────────────
+        const gap = ((rates.binanceVes / rates.bcv) - 1) * 100;
+
+        const gapEl = document.getElementById('usd-usdt-gap');
+        if (gap >= 35) {
+            gapEl.textContent = `${fmt(gap, 2)}% 🔥🔥`;
+            gapEl.className = 'value extra-red-text';
+        } else if (gap >= 25) {
+            gapEl.textContent = `${fmt(gap, 2)}% 🔥`;
+            gapEl.className = 'value red-text';
+        } else if (gap >= 10) {
+            gapEl.textContent = `${fmt(gap, 2)}% ⚠️`;
+            gapEl.className = 'yellow-text';
+        } else {
+            gapEl.textContent = `${fmt(gap, 2)}% ✅`;
+            gapEl.className = 'green-text';
+        }
+
+        // ─── Update last updated ─────────────────────────────────────────────────────
         if (data.fetchedAt) {
             const timeStr = new Date(data.fetchedAt)
                 .toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
@@ -124,11 +148,14 @@ function calculate() {
     console.log(rates.euro, binanceEurNet);
 
     // 3. Write results to DOM (missing elements are silently skipped)
+    // ─── Write results to DOM ─────────────────────────────────────────────────────
+    // ─── Calculations module ─────────────────────────────────────────────────────
     setText('result-platform-comm', `$${fmt(platformComm, 2)}`);
     setText('result-tax', `$${fmt(tax, 2)}`);
     setText('result-card-comm', `$${fmt(cardComm, 2)}`);
     setText('result-total-value', `$${fmt(totalValue, 2)}`);
     setText('result-amount-binance', `$${fmt(totalAmountBinance, 2)}`);
+
     setText('result-real-amount', `${fmt(realAmount * 100, 2)}%`);
     setText('result-spread', `Bs. ${fmt(spread, 2)}`);
     setText('result-profit', `Bs. ${fmt(totalProfit, 2)}`);
