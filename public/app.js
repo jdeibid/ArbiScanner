@@ -3,7 +3,7 @@
 const PLATFORMS = {
     wally: {
         label: 'WallyTech',
-        commission: 0.0299,   // 2.99%
+        commission: 0.035,   // 3.5%
         taxRate: 0.07,        // 7 % of commission (ITBMS)
         taxApplicable: false, // WallyTech does NOT charge the tax
         binanceRateKey: 'binanceWally',
